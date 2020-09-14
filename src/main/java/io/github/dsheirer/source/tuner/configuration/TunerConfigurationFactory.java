@@ -44,6 +44,7 @@ import io.github.dsheirer.source.tuner.rtl.e4k.E4KTunerConfiguration;
 import io.github.dsheirer.source.tuner.rtl.e4k.E4KTunerEditor;
 import io.github.dsheirer.source.tuner.rtl.r820t.R820TTunerConfiguration;
 import io.github.dsheirer.source.tuner.rtl.r820t.R820TTunerEditor;
+import io.github.dsheirer.source.tuner.sdrplay.SDRPlayTunerConfiguration;
 
 public class TunerConfigurationFactory
 {
@@ -69,6 +70,8 @@ public class TunerConfigurationFactory
                 return new R820TTunerConfiguration(uniqueID, name);
             case RECORDING:
                 return new RecordingTunerConfiguration(uniqueID, name);
+            case SDRPLAY_GENERIC:
+                return new SDRPlayTunerConfiguration(uniqueID, name);
             default:
                 throw new IllegalArgumentException("Unrecognized tuner type ["
                     + type.name() + "] - can't create named [" + name + "] tuner"

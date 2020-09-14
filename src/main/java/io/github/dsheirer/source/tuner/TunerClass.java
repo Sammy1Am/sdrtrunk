@@ -58,6 +58,7 @@ public enum TunerClass
 	TWINTECH_UT40( TunerType.FITIPOWER_FC0013, "1B80", "D3A4", "Twintech", "UT-40" ),
 	ZAAPA_ZTMINDVBZP( TunerType.FITIPOWER_FC0012, "1B80", "D398", "Zaapa", "ZT-MINDVBZP" ),
 	TEST_TUNER(TunerType.TEST, "0", "0", "ABC Tuners Inc.", "Model XYZ"),
+        SDRPLAY_RSP1(TunerType.SDRPLAY_GENERIC, "0", "0", "SDRplay", "RSP1"),
 	RECORDING_TUNER(TunerType.RECORDING, "0", "0", "Recording Tuner", "Recording"),
 	UNKNOWN( TunerType.UNKNOWN, "0", "0", "Unknown Manufacturer", "Unknown Device" );
 	

@@ -21,6 +21,7 @@
  */
 package io.github.dsheirer.source.tuner;
 
+import com.sun.jna.ptr.IntByReference;
 import io.github.dsheirer.preference.UserPreferences;
 import io.github.dsheirer.source.SourceException;
 import io.github.dsheirer.source.mixer.MixerManager;
@@ -35,7 +36,12 @@ import io.github.dsheirer.source.tuner.rtl.RTL2832Tuner;
 import io.github.dsheirer.source.tuner.rtl.RTL2832TunerController;
 import io.github.dsheirer.source.tuner.rtl.e4k.E4KTunerController;
 import io.github.dsheirer.source.tuner.rtl.r820t.R820TTunerController;
+import io.github.dsheirer.source.tuner.sdrplay.SDRPlayTuner;
+import io.github.dsheirer.source.tuner.sdrplay.api.SDRPlayAPILibrary;
+import io.github.dsheirer.source.tuner.sdrplay.api.SDRPlayJava;
+import io.github.dsheirer.source.tuner.sdrplay.api.sdrplay_api_DeviceT;
 import io.github.dsheirer.source.tuner.usb.USBMasterProcessor;
+import java.nio.IntBuffer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.usb4java.Device;
@@ -77,6 +83,7 @@ public class TunerManager
         mUserPreferences = userPreferences;
 
         initTuners();
+        initSDRPlayTuners();
         validateUSBBusTransferRates();
     }
 
@@ -98,8 +105,36 @@ public class TunerManager
         {
             mLog.error("Error shutting down LibUsb", e);
         }
+        
+        mLog.info("Closing SDRPlay API ...");
+        deinitSDRPlayTuners();
     }
 
+    private void initSDRPlayTuners() {
+        SDRPlayJava spj = SDRPlayJava.getInstance();
+        spj.openApi(); // Open API first before we do anything (probably should only happen once)
+        List<SDRPlayTuner> tuners = spj.getTuners(mUserPreferences);
+        StringBuilder sb = new StringBuilder();
+        for (SDRPlayTuner tuner : tuners) {
+            try {
+                mTunerModel.addTuner(tuner);
+                sb.append(" LOADED: ");
+                sb.append(tuner.toString());
+                sb.append(" Max Rate:").append(tuner.getMaximumUSBBitsPerSecond()).append(" bps");
+            } catch (Exception e) {
+                sb.append(" NOT LOADED: ");
+                //sb.append(status.getInfo());
+                sb.append(" Error:").append(e.getMessage());
+            }
+        }
+        mLog.info(sb.toString());
+    }
+    
+    private void deinitSDRPlayTuners() {
+        SDRPlayJava spj = SDRPlayJava.getInstance();
+        spj.closeApi();
+    }
+    
     /**
      * Loads all USB tuners and USB/Mixer tuner devices
      */

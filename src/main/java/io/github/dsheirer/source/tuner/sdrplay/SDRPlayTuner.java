@@ -23,7 +23,7 @@ public class SDRPlayTuner extends Tuner {
 
     public SDRPlayTuner(SDRPlayTunerController controller, UserPreferences userPreferences) throws SourceException
     {
-        super("HackRF", controller, userPreferences);
+        super("SDRPlay", controller, userPreferences);
     }
 
     public SDRPlayTunerController getController()
@@ -33,27 +33,28 @@ public class SDRPlayTuner extends Tuner {
     
     @Override
     public int getMaximumUSBBitsPerSecond() {
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+        //12 bits per sample * 8.064 MSPS
+        return 96768000;  // This is sort of a rough guess
     }
 
     @Override
     public String getUniqueID() {
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+        return getController().getSerialNumber();
     }
 
     @Override
     public TunerClass getTunerClass() {
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+        return TunerClass.SDRPLAY_RSP1; //TODO figure out hardware Ids
     }
 
     @Override
     public TunerType getTunerType() {
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+        return TunerType.SDRPLAY_GENERIC;
     }
 
     @Override
     public double getSampleSize() {
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+        return 12.0; //TODO No idea where to get this from
     }
     
 }
