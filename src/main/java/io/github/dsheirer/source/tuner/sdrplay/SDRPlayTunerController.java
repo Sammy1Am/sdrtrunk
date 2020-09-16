@@ -5,11 +5,12 @@
  */
 package io.github.dsheirer.source.tuner.sdrplay;
 
+import io.github.dsheirer.sample.Listener;
+import io.github.dsheirer.sample.buffer.ReusableComplexBuffer;
 import io.github.dsheirer.source.SourceException;
 import io.github.dsheirer.source.tuner.TunerController;
 import io.github.dsheirer.source.tuner.configuration.TunerConfiguration;
-import io.github.dsheirer.source.tuner.sdrplay.api.SDRPlayJava;
-import io.github.dsheirer.source.tuner.sdrplay.api.sdrplay_api_DeviceT;
+import io.github.sammy1am.sdrplay.api.SDRPlayAPI.sdrplay_api_DeviceT;
 import java.nio.charset.Charset;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -27,23 +28,24 @@ public class SDRPlayTunerController extends TunerController {
     public static final double USABLE_BANDWIDTH_PERCENT = 0.90;
     public static final int DC_SPIKE_AVOID_BUFFER = 5000;
     
+    private static final SDRplayWrapper wrapper = SDRplayWrapper.getInstance();
+    
     private byte mHWVer;
     private String mSerialNumber;
     private sdrplay_api_DeviceT mDevice;
 
-    public SDRPlayTunerController(sdrplay_api_DeviceT deviceDataItem) throws SourceException
+    public SDRPlayTunerController(sdrplay_api_DeviceT deviceData)
     {
         super(MIN_FREQUENCY, MAX_FREQUENCY, DC_SPIKE_AVOID_BUFFER, USABLE_BANDWIDTH_PERCENT);
 
-        mHWVer = deviceDataItem.hwVer;
-        mSerialNumber = new String(deviceDataItem.SerNo, Charset.forName("UTF-8")).trim();
-        mDevice = deviceDataItem;
+        mHWVer = deviceData.hwVer;
+        mSerialNumber = new String(deviceData.SerNo, Charset.forName("UTF-8")).trim();
+        mDevice = deviceData;
     }
     
     @Override
     public void dispose() {
-        SDRPlayJava.getInstance().uninitDevice(mDevice);
-        SDRPlayJava.getInstance().releaseDevice(mDevice);
+        wrapper.disposeTuner(mDevice);
     }
 
     @Override
@@ -109,5 +111,31 @@ public class SDRPlayTunerController extends TunerController {
     
     public String getSerialNumber() {
         return mSerialNumber;
+    }
+    
+    /**
+     * Adds the IQ buffer listener and automatically starts buffer transfer processing, if not already started.
+     */
+    @Override
+    public void addBufferListener(Listener<ReusableComplexBuffer> listener)
+    {
+        if(!hasBufferListeners()) {
+            // TODO Init Device
+        }
+        super.addBufferListener(listener);
+    }
+
+    /**
+     * Removes the IQ buffer listener and stops buffer transfer processing if there are no more listeners.
+     */
+    @Override
+    public void removeBufferListener(Listener<ReusableComplexBuffer> listener)
+    {
+        super.removeBufferListener(listener);
+
+        if(!hasBufferListeners())
+        {
+            //TODO Uninit device
+        }
     }
 }

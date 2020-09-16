@@ -21,7 +21,7 @@ public class SDRPlayTuner extends Tuner {
 
     private final static Logger mLog = LoggerFactory.getLogger(SDRPlayTuner.class);
 
-    public SDRPlayTuner(SDRPlayTunerController controller, UserPreferences userPreferences) throws SourceException
+    public SDRPlayTuner(SDRPlayTunerController controller, UserPreferences userPreferences)
     {
         super("SDRPlay", controller, userPreferences);
     }

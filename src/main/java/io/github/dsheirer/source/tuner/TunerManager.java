@@ -36,6 +36,7 @@ import io.github.dsheirer.source.tuner.rtl.RTL2832TunerController;
 import io.github.dsheirer.source.tuner.rtl.e4k.E4KTunerController;
 import io.github.dsheirer.source.tuner.rtl.r820t.R820TTunerController;
 import io.github.dsheirer.source.tuner.sdrplay.SDRPlayTuner;
+import io.github.dsheirer.source.tuner.sdrplay.SDRplayWrapper;
 import io.github.dsheirer.source.tuner.usb.USBMasterProcessor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -106,9 +107,7 @@ public class TunerManager
     }
 
     private void initSDRPlayTuners() {
-        SDRPlayJava spj = SDRPlayJava.getInstance();
-        spj.openApi(); // Open API first before we do anything (probably should only happen once)
-        List<SDRPlayTuner> tuners = spj.getTuners(mUserPreferences);
+        List<SDRPlayTuner> tuners = SDRplayWrapper.getInstance().getTuners(mUserPreferences);
         StringBuilder sb = new StringBuilder();
         for (SDRPlayTuner tuner : tuners) {
             try {
@@ -118,7 +117,6 @@ public class TunerManager
                 sb.append(" Max Rate:").append(tuner.getMaximumUSBBitsPerSecond()).append(" bps");
             } catch (Exception e) {
                 sb.append(" NOT LOADED: ");
-                //sb.append(status.getInfo());
                 sb.append(" Error:").append(e.getMessage());
             }
         }
@@ -126,8 +124,7 @@ public class TunerManager
     }
     
     private void deinitSDRPlayTuners() {
-        SDRPlayJava spj = SDRPlayJava.getInstance();
-        spj.closeApi();
+        SDRplayWrapper.getInstance().closeAPI();
     }
     
     /**
