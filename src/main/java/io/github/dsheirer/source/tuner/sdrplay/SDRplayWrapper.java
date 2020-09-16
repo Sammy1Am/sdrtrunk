@@ -5,12 +5,17 @@
  */
 package io.github.dsheirer.source.tuner.sdrplay;
 
+import com.sun.jna.Pointer;
 import com.sun.jna.ptr.FloatByReference;
 import com.sun.jna.ptr.IntByReference;
 import io.github.dsheirer.preference.UserPreferences;
 import io.github.sammy1am.sdrplay.api.SDRPlayAPI;
+import io.github.sammy1am.sdrplay.api.SDRPlayAPI.HANDLE;
+import io.github.sammy1am.sdrplay.api.SDRPlayAPI.sdrplay_api_CallbackFnsT;
 import io.github.sammy1am.sdrplay.api.SDRPlayAPI.sdrplay_api_DeviceT;
 import io.github.sammy1am.sdrplay.api.SDRPlayAPI.sdrplay_api_ErrT;
+import io.github.sammy1am.sdrplay.api.SDRPlayAPI.sdrplay_api_EventCallback_t;
+import io.github.sammy1am.sdrplay.api.SDRPlayAPI.sdrplay_api_StreamCallback_t;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -67,6 +72,15 @@ public class SDRplayWrapper {
         
         
         return foundTuners;
+    }
+    
+    public void startTuner(HANDLE dev, sdrplay_api_StreamCallback_t streamCBA, sdrplay_api_StreamCallback_t streamCBB, sdrplay_api_EventCallback_t eventCB) {
+        final sdrplay_api_CallbackFnsT callbacks = new sdrplay_api_CallbackFnsT(streamCBA, streamCBB, eventCB);
+        checkReturnStatus(API.sdrplay_api_Init(dev, callbacks, Pointer.NULL));
+    }
+    
+    public void stopTuner(HANDLE dev) {
+        checkReturnStatus(API.sdrplay_api_Uninit(dev));
     }
     
     public void disposeTuner(sdrplay_api_DeviceT device) {

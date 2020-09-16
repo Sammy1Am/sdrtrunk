@@ -5,12 +5,18 @@
  */
 package io.github.dsheirer.source.tuner.sdrplay;
 
+import com.sun.jna.Pointer;
+import com.sun.jna.ptr.ShortByReference;
 import io.github.dsheirer.sample.Listener;
+import io.github.dsheirer.sample.buffer.ReusableBufferBroadcaster;
 import io.github.dsheirer.sample.buffer.ReusableComplexBuffer;
 import io.github.dsheirer.source.SourceException;
 import io.github.dsheirer.source.tuner.TunerController;
 import io.github.dsheirer.source.tuner.configuration.TunerConfiguration;
+import io.github.sammy1am.sdrplay.api.SDRPlayAPI;
 import io.github.sammy1am.sdrplay.api.SDRPlayAPI.sdrplay_api_DeviceT;
+import io.github.sammy1am.sdrplay.api.SDRPlayAPI.sdrplay_api_EventCallback_t;
+import io.github.sammy1am.sdrplay.api.SDRPlayAPI.sdrplay_api_StreamCallback_t;
 import java.nio.charset.Charset;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -29,6 +35,10 @@ public class SDRPlayTunerController extends TunerController {
     public static final int DC_SPIKE_AVOID_BUFFER = 5000;
     
     private static final SDRplayWrapper wrapper = SDRplayWrapper.getInstance();
+    
+    private final StreamListener streamListenerA = new StreamListener(mReusableBufferBroadcaster);
+    private final StreamListener streamListenerB = new StreamListener(mReusableBufferBroadcaster);
+    private final EventListener eventListener = new EventListener();
     
     private byte mHWVer;
     private String mSerialNumber;
@@ -120,7 +130,7 @@ public class SDRPlayTunerController extends TunerController {
     public void addBufferListener(Listener<ReusableComplexBuffer> listener)
     {
         if(!hasBufferListeners()) {
-            // TODO Init Device
+            wrapper.startTuner(mDevice.dev, streamListenerA, streamListenerB, eventListener);
         }
         super.addBufferListener(listener);
     }
@@ -135,7 +145,36 @@ public class SDRPlayTunerController extends TunerController {
 
         if(!hasBufferListeners())
         {
-            //TODO Uninit device
+            wrapper.stopTuner(mDevice.dev);
         }
+    }
+    
+    private class StreamListener implements sdrplay_api_StreamCallback_t {
+
+        private final ReusableBufferBroadcaster rbb;
+        
+        public StreamListener(ReusableBufferBroadcaster<ReusableComplexBuffer> broadcaster) {
+            rbb = broadcaster;
+        }
+        
+        @Override
+        public void apply(ShortByReference xi, ShortByReference xq, SDRPlayAPI.sdrplay_api_StreamCbParamsT params, int numSamples, int reset, Pointer cbContext) {
+            mLog.debug("Got samples: " + numSamples);
+            //rbb.broadcast(reusableBuffer);
+        }
+        
+    }
+    
+    private class EventListener implements sdrplay_api_EventCallback_t {
+        
+        public EventListener() {
+
+        }
+        
+        @Override
+        public void apply(SDRPlayAPI.sdrplay_api_EventT eventId, SDRPlayAPI.sdrplay_api_TunerSelectT tuner, SDRPlayAPI.sdrplay_api_EventParamsT params, Pointer cbContext) {
+            System.out.println("Event: " + eventId);
+        }
+
     }
 }
