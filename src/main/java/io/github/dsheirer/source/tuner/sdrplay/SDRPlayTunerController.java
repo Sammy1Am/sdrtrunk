@@ -167,7 +167,6 @@ public class SDRPlayTunerController extends TunerController {
         @Override
         public void consume(short[] iSamples, short[] qSamples, SDRPlayAPI.sdrplay_api_StreamCbParamsT params, int numSamples, int reset, Pointer cbContext) {
             mLog.debug("Got samples: " + numSamples);
-            mLog.debug(String.valueOf((float)iSamples[0]));
             ReusableComplexBuffer buffer = mReusableComplexBufferQueue.getBuffer(numSamples*2);
             
             float[] primitiveFloatBuffer = new float[numSamples*2]; // TODO Not the most efficient, ideall we'd have a ReusableBuffer with separate I/Q buffers

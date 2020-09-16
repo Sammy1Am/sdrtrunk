@@ -73,7 +73,7 @@ public class OverflowableBufferStream extends OverflowableTransferQueue<Reusable
     {
         if(overlap >= sampleCount)
         {
-            //throw new IllegalArgumentException("Overlap must be less than the requested sample count");
+            throw new IllegalArgumentException("Overlap must be less than the requested sample count");
         }
 
         if(mCurrentBuffer == null)
