@@ -8,7 +8,7 @@ package io.github.dsheirer.source.tuner.sdrplay;
 import io.github.dsheirer.source.SourceException;
 import io.github.dsheirer.source.tuner.TunerController;
 import io.github.dsheirer.source.tuner.configuration.TunerConfiguration;
-import io.github.dsheirer.source.tuner.sdrplay.api.SDRPlayAPILibrary.HANDLE;
+import io.github.dsheirer.source.tuner.sdrplay.api.SDRPlayJava;
 import io.github.dsheirer.source.tuner.sdrplay.api.sdrplay_api_DeviceT;
 import java.nio.charset.Charset;
 import org.slf4j.Logger;
@@ -29,7 +29,7 @@ public class SDRPlayTunerController extends TunerController {
     
     private byte mHWVer;
     private String mSerialNumber;
-    private HANDLE mDeviceHandle;
+    private sdrplay_api_DeviceT mDevice;
 
     public SDRPlayTunerController(sdrplay_api_DeviceT deviceDataItem) throws SourceException
     {
@@ -37,12 +37,13 @@ public class SDRPlayTunerController extends TunerController {
 
         mHWVer = deviceDataItem.hwVer;
         mSerialNumber = new String(deviceDataItem.SerNo, Charset.forName("UTF-8")).trim();
-        mDeviceHandle = deviceDataItem.dev;
+        mDevice = deviceDataItem;
     }
     
     @Override
     public void dispose() {
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+        SDRPlayJava.getInstance().uninitDevice(mDevice);
+        SDRPlayJava.getInstance().releaseDevice(mDevice);
     }
 
     @Override

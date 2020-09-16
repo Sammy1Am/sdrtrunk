@@ -34,6 +34,7 @@ import io.github.dsheirer.source.tuner.hackrf.HackRFTunerConfiguration;
 import io.github.dsheirer.source.tuner.recording.RecordingTunerConfiguration;
 import io.github.dsheirer.source.tuner.rtl.e4k.E4KTunerConfiguration;
 import io.github.dsheirer.source.tuner.rtl.r820t.R820TTunerConfiguration;
+import io.github.dsheirer.source.tuner.sdrplay.SDRPlayTunerConfiguration;
 
 /**
  * Abstract class to hold a named configuration for a specific type of tuner
@@ -47,6 +48,7 @@ import io.github.dsheirer.source.tuner.rtl.r820t.R820TTunerConfiguration;
     @JsonSubTypes.Type(value=HackRFTunerConfiguration.class, name="hackRFTunerConfiguration"),
     @JsonSubTypes.Type(value= RecordingTunerConfiguration.class, name="recordingTunerConfiguration"),
     @JsonSubTypes.Type(value=R820TTunerConfiguration.class, name="r820TTunerConfiguration"),
+    @JsonSubTypes.Type(value=SDRPlayTunerConfiguration.class, name="SDRPlayTunerConfiguration"),
 })
 @JacksonXmlRootElement( localName = "tuner_configuration" )
 public abstract class TunerConfiguration
@@ -97,7 +99,6 @@ public abstract class TunerConfiguration
     public void setUniqueID(String id)
     {
         mUniqueID = id;
-        ;
     }
 
     @JacksonXmlProperty(isAttribute = true, localName = "assigned")

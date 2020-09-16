@@ -21,7 +21,6 @@
  */
 package io.github.dsheirer.source.tuner;
 
-import com.sun.jna.ptr.IntByReference;
 import io.github.dsheirer.preference.UserPreferences;
 import io.github.dsheirer.source.SourceException;
 import io.github.dsheirer.source.mixer.MixerManager;
@@ -37,11 +36,7 @@ import io.github.dsheirer.source.tuner.rtl.RTL2832TunerController;
 import io.github.dsheirer.source.tuner.rtl.e4k.E4KTunerController;
 import io.github.dsheirer.source.tuner.rtl.r820t.R820TTunerController;
 import io.github.dsheirer.source.tuner.sdrplay.SDRPlayTuner;
-import io.github.dsheirer.source.tuner.sdrplay.api.SDRPlayAPILibrary;
-import io.github.dsheirer.source.tuner.sdrplay.api.SDRPlayJava;
-import io.github.dsheirer.source.tuner.sdrplay.api.sdrplay_api_DeviceT;
 import io.github.dsheirer.source.tuner.usb.USBMasterProcessor;
-import java.nio.IntBuffer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.usb4java.Device;
