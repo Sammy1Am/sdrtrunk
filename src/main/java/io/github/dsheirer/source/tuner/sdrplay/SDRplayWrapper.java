@@ -100,5 +100,4 @@ public class SDRplayWrapper {
             throw new RuntimeException(API.sdrplay_api_GetErrorString(returnStatus));
         }
     }
-    
 }

@@ -10,6 +10,7 @@ import com.sun.jna.ptr.ShortByReference;
 import io.github.dsheirer.sample.Listener;
 import io.github.dsheirer.sample.buffer.ReusableBufferBroadcaster;
 import io.github.dsheirer.sample.buffer.ReusableComplexBuffer;
+import io.github.dsheirer.sample.buffer.ReusableComplexBufferQueue;
 import io.github.dsheirer.source.SourceException;
 import io.github.dsheirer.source.tuner.TunerController;
 import io.github.dsheirer.source.tuner.configuration.TunerConfiguration;
@@ -17,6 +18,8 @@ import io.github.sammy1am.sdrplay.api.SDRPlayAPI;
 import io.github.sammy1am.sdrplay.api.SDRPlayAPI.sdrplay_api_DeviceT;
 import io.github.sammy1am.sdrplay.api.SDRPlayAPI.sdrplay_api_EventCallback_t;
 import io.github.sammy1am.sdrplay.api.SDRPlayAPI.sdrplay_api_StreamCallback_t;
+import io.github.sammy1am.sdrplay.api.StreamConsumer;
+import java.nio.FloatBuffer;
 import java.nio.charset.Charset;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -36,8 +39,10 @@ public class SDRPlayTunerController extends TunerController {
     
     private static final SDRplayWrapper wrapper = SDRplayWrapper.getInstance();
     
-    private final StreamListener streamListenerA = new StreamListener(mReusableBufferBroadcaster);
-    private final StreamListener streamListenerB = new StreamListener(mReusableBufferBroadcaster);
+    private ReusableComplexBufferQueue mReusableComplexBufferQueue = new ReusableComplexBufferQueue("SDRplayTunerController");
+    
+    private final StreamListener streamListenerA = new StreamListener(mReusableBufferBroadcaster, mReusableComplexBufferQueue);
+    private final StreamListener streamListenerB = new StreamListener(mReusableBufferBroadcaster, mReusableComplexBufferQueue);
     private final EventListener eventListener = new EventListener();
     
     private byte mHWVer;
@@ -149,18 +154,32 @@ public class SDRPlayTunerController extends TunerController {
         }
     }
     
-    private class StreamListener implements sdrplay_api_StreamCallback_t {
+    private class StreamListener extends StreamConsumer {
 
         private final ReusableBufferBroadcaster rbb;
+        private final ReusableComplexBufferQueue mReusableComplexBufferQueue;
         
-        public StreamListener(ReusableBufferBroadcaster<ReusableComplexBuffer> broadcaster) {
+        public StreamListener(ReusableBufferBroadcaster<ReusableComplexBuffer> broadcaster, ReusableComplexBufferQueue bufferQueue) {
             rbb = broadcaster;
+            mReusableComplexBufferQueue = bufferQueue;
         }
         
         @Override
-        public void apply(ShortByReference xi, ShortByReference xq, SDRPlayAPI.sdrplay_api_StreamCbParamsT params, int numSamples, int reset, Pointer cbContext) {
+        public void consume(short[] iSamples, short[] qSamples, SDRPlayAPI.sdrplay_api_StreamCbParamsT params, int numSamples, int reset, Pointer cbContext) {
             mLog.debug("Got samples: " + numSamples);
-            //rbb.broadcast(reusableBuffer);
+            mLog.debug(String.valueOf((float)iSamples[0]));
+            ReusableComplexBuffer buffer = mReusableComplexBufferQueue.getBuffer(numSamples*2);
+            
+            float[] primitiveFloatBuffer = new float[numSamples*2]; // TODO Not the most efficient, ideall we'd have a ReusableBuffer with separate I/Q buffers
+            
+            for (int s=0;s<numSamples;s++) {
+                primitiveFloatBuffer[s*2] = (float)iSamples[s];
+                primitiveFloatBuffer[(s*2)+1] = (float)qSamples[s];
+            }
+            
+            buffer.reloadFrom(FloatBuffer.wrap(primitiveFloatBuffer), System.currentTimeMillis());
+            
+            rbb.broadcast(buffer);
         }
         
     }
