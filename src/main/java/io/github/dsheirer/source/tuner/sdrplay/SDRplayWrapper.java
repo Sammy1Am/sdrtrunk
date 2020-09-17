@@ -15,6 +15,7 @@ import io.github.sammy1am.sdrplay.api.SDRPlayAPI.sdrplay_api_CallbackFnsT;
 import io.github.sammy1am.sdrplay.api.SDRPlayAPI.sdrplay_api_DeviceT;
 import io.github.sammy1am.sdrplay.api.SDRPlayAPI.sdrplay_api_ErrT;
 import io.github.sammy1am.sdrplay.api.SDRPlayAPI.sdrplay_api_EventCallback_t;
+import io.github.sammy1am.sdrplay.api.SDRPlayAPI.sdrplay_api_ReasonForUpdateT;
 import io.github.sammy1am.sdrplay.api.SDRPlayAPI.sdrplay_api_StreamCallback_t;
 import java.util.ArrayList;
 import java.util.List;
@@ -60,7 +61,10 @@ public class SDRplayWrapper {
             // Select this device for our use
             checkReturnStatus(API.sdrplay_api_SelectDevice(device));
             
-            SDRPlayTunerController controller = new SDRPlayTunerController(device);
+            SDRPlayAPI.sdrplay_api_DeviceParamsT dpt = new SDRPlayAPI.sdrplay_api_DeviceParamsT();
+            checkReturnStatus(API.sdrplay_api_GetDeviceParams(device.dev, dpt));
+            
+            SDRPlayTunerController controller = new SDRPlayTunerController(device, dpt);
             SDRPlayTuner tuner = new SDRPlayTuner(controller, userPreferences);
             foundTuners.add(tuner);
         }
@@ -77,6 +81,13 @@ public class SDRplayWrapper {
     public void startTuner(HANDLE dev, sdrplay_api_StreamCallback_t streamCBA, sdrplay_api_StreamCallback_t streamCBB, sdrplay_api_EventCallback_t eventCB) {
         final sdrplay_api_CallbackFnsT callbacks = new sdrplay_api_CallbackFnsT(streamCBA, streamCBB, eventCB);
         checkReturnStatus(API.sdrplay_api_Init(dev, callbacks, Pointer.NULL));
+    }
+    
+    public void paramUpdate(HANDLE dev, sdrplay_api_ReasonForUpdateT updateReason) {
+        checkReturnStatus(API.sdrplay_api_Update(dev, 
+                SDRPlayAPI.sdrplay_api_TunerSelectT.sdrplay_api_Tuner_A, // Only do A for now
+                updateReason, 
+                SDRPlayAPI.sdrplay_api_ReasonForUpdateExtension1T.sdrplay_api_Update_Ext1_None)); // Don't need this yet
     }
     
     public void stopTuner(HANDLE dev) {

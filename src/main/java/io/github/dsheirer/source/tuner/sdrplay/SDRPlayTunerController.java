@@ -6,7 +6,6 @@
 package io.github.dsheirer.source.tuner.sdrplay;
 
 import com.sun.jna.Pointer;
-import com.sun.jna.ptr.ShortByReference;
 import io.github.dsheirer.sample.Listener;
 import io.github.dsheirer.sample.buffer.ReusableBufferBroadcaster;
 import io.github.dsheirer.sample.buffer.ReusableComplexBuffer;
@@ -15,9 +14,10 @@ import io.github.dsheirer.source.SourceException;
 import io.github.dsheirer.source.tuner.TunerController;
 import io.github.dsheirer.source.tuner.configuration.TunerConfiguration;
 import io.github.sammy1am.sdrplay.api.SDRPlayAPI;
+import io.github.sammy1am.sdrplay.api.SDRPlayAPI.sdrplay_api_DeviceParamsT;
 import io.github.sammy1am.sdrplay.api.SDRPlayAPI.sdrplay_api_DeviceT;
 import io.github.sammy1am.sdrplay.api.SDRPlayAPI.sdrplay_api_EventCallback_t;
-import io.github.sammy1am.sdrplay.api.SDRPlayAPI.sdrplay_api_StreamCallback_t;
+import io.github.sammy1am.sdrplay.api.SDRPlayAPI.sdrplay_api_ReasonForUpdateT;
 import io.github.sammy1am.sdrplay.api.StreamConsumer;
 import java.nio.FloatBuffer;
 import java.nio.charset.Charset;
@@ -48,14 +48,16 @@ public class SDRPlayTunerController extends TunerController {
     private byte mHWVer;
     private String mSerialNumber;
     private sdrplay_api_DeviceT mDevice;
+    private sdrplay_api_DeviceParamsT mDeviceParameters;
 
-    public SDRPlayTunerController(sdrplay_api_DeviceT deviceData)
+    public SDRPlayTunerController(sdrplay_api_DeviceT deviceData, sdrplay_api_DeviceParamsT deviceParams)
     {
         super(MIN_FREQUENCY, MAX_FREQUENCY, DC_SPIKE_AVOID_BUFFER, USABLE_BANDWIDTH_PERCENT);
 
         mHWVer = deviceData.hwVer;
         mSerialNumber = new String(deviceData.SerNo, Charset.forName("UTF-8")).trim();
         mDevice = deviceData;
+        mDeviceParameters = deviceParams;
     }
     
     @Override
@@ -73,6 +75,31 @@ public class SDRPlayTunerController extends TunerController {
         if (config instanceof SDRPlayTunerConfiguration) {
             SDRPlayTunerConfiguration sdrPlayConfig = (SDRPlayTunerConfiguration) config;
 
+            try {
+                setSampleRate();
+            }catch(Exception ex)
+            {
+                throw new SourceException("Error while applying tuner "
+                    + "configuration", ex);
+            }
+            
+            try {
+                mDeviceParameters.devParams.fsFreq.fsHz = 8000000.0;
+                mDeviceParameters.rxChannelA.tunerParams.rfFreq.rfHz = 220000000.0;
+                mDeviceParameters.rxChannelA.tunerParams.bwType = SDRPlayAPI.sdrplay_api_Bw_MHzT.sdrplay_api_BW_1_536;
+                mDeviceParameters.rxChannelA.tunerParams.ifType = SDRPlayAPI.sdrplay_api_If_kHzT.sdrplay_api_IF_Zero;
+                mDeviceParameters.rxChannelA.tunerParams.gain.gRdB = 40;
+                mDeviceParameters.rxChannelA.tunerParams.gain.LNAstate = 5;
+                
+                
+                //setFrequency(sdrPlayConfig.getFrequency());
+            } catch(Exception se)
+            {
+                //Do nothing, we couldn't set the configured frequency
+            }
+            
+            
+            
 //            //Convert legacy sample rate setting to new sample rates
 //            if(!hackRFConfig.getSampleRate().isValidSampleRate())
 //            {
@@ -111,17 +138,22 @@ public class SDRPlayTunerController extends TunerController {
 
     @Override
     public long getTunedFrequency() throws SourceException {
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+        return mFrequencyController.getTunedFrequency();
     }
-
+    
     @Override
     public void setTunedFrequency(long frequency) throws SourceException {
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+        mDeviceParameters.rxChannelA.tunerParams.rfFreq.rfHz = frequency;
+        //wrapper.paramUpdate(mDevice.dev, sdrplay_api_ReasonForUpdateT.sdrplay_api_Update_Tuner_Frf);
     }
 
     @Override
     public double getCurrentSampleRate() throws SourceException {
         throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+    }
+    
+    private void setSampleRate() throws SourceException{
+        mFrequencyController.setSampleRate(5000000);
     }
     
     public String getSerialNumber() {
@@ -136,6 +168,11 @@ public class SDRPlayTunerController extends TunerController {
     {
         if(!hasBufferListeners()) {
             wrapper.startTuner(mDevice.dev, streamListenerA, streamListenerB, eventListener);
+            try {
+            setFrequency(DEFAULT_FREQUENCY);
+            } catch (SourceException se) {
+                mLog.error("Error changing frequency", se);
+            }
         }
         super.addBufferListener(listener);
     }
@@ -166,7 +203,7 @@ public class SDRPlayTunerController extends TunerController {
         
         @Override
         public void consume(short[] iSamples, short[] qSamples, SDRPlayAPI.sdrplay_api_StreamCbParamsT params, int numSamples, int reset, Pointer cbContext) {
-            mLog.debug("Got samples: " + numSamples);
+            //mLog.debug("Got samples: " + numSamples);
             ReusableComplexBuffer buffer = mReusableComplexBufferQueue.getBuffer(numSamples*2);
             
             float[] primitiveFloatBuffer = new float[numSamples*2]; // TODO Not the most efficient, ideall we'd have a ReusableBuffer with separate I/Q buffers
